@@ -1,0 +1,26 @@
+modname := kisni
+DKMS := dkms
+modver := $(shell awk -F'"' '/define *SPY_VERSION/{print $$2}' < spy.c)
+
+kisni-objs := spy.o
+
+# directory in which generated files are stored
+DKMS_DEST := /usr/src/$(modname)-$(modver)
+
+all: install
+
+src_install:
+	mkdir -p '$(DKMS_DEST)'
+	cp Makefile spy.c '$(DKMS_DEST)'
+	sed 's/#MODULE_VERSION#/$(modver)/' dkms/dkms.conf > '$(DKMS_DEST)/dkms.conf'
+
+build: src_install
+	$(DKMS) build -m $(modname) -v $(modver)
+
+install: build
+	$(DKMS) install -m $(modname) -v $(modver)
+
+uninstall:
+	$(DKMS) remove -m $(modname) -v $(modver) --all
+
+.PHONY: all src_install build install uninstall
